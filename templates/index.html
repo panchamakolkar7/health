@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Medicine Reminder 💊</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <!-- Lucide icons via CDN (lightweight, tree-shakable) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+
+  <!-- ── TOP HEADER ──────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">💊</span>
+        <div>
+          <h1>MedReminder</h1>
+          <small id="today-label">Loading…</small>
+        </div>
+      </div>
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="dashboard">
+          <i data-lucide="layout-dashboard"></i> Dashboard
+        </button>
+        <button class="tab-btn" data-tab="medicines">
+          <i data-lucide="pill"></i> Medicines
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── MAIN CONTENT ─────────────────────────────────────────────────── -->
+  <main class="app-main">
+
+    <!-- ╔══════════════════════════════╗ -->
+    <!-- ║        DASHBOARD TAB         ║ -->
+    <!-- ╚══════════════════════════════╝ -->
+    <section id="tab-dashboard" class="tab-content active">
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-card stat-total">
+          <i data-lucide="list"></i>
+          <div>
+            <span class="stat-num" id="stat-total">0</span>
+            <span class="stat-label">Total Today</span>
+          </div>
+        </div>
+        <div class="stat-card stat-taken">
+          <i data-lucide="check-circle-2"></i>
+          <div>
+            <span class="stat-num" id="stat-taken">0</span>
+            <span class="stat-label">Taken</span>
+          </div>
+        </div>
+        <div class="stat-card stat-pending">
+          <i data-lucide="clock"></i>
+          <div>
+            <span class="stat-num" id="stat-pending">0</span>
+            <span class="stat-label">Pending</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="progress-wrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <span class="progress-label" id="progress-label">0% complete</span>
+      </div>
+
+      <!-- Medicine cards -->
+      <div class="section-title">
+        <h2>Today's Schedule</h2>
+        <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">
+          <i data-lucide="refresh-cw"></i> Refresh
+        </button>
+      </div>
+
+      <div id="dashboard-list" class="medicine-grid">
+        <!-- Populated by JS -->
+      </div>
+
+    </section>
+
+    <!-- ╔══════════════════════════════╗ -->
+    <!-- ║       MEDICINES TAB          ║ -->
+    <!-- ╚══════════════════════════════╝ -->
+    <section id="tab-medicines" class="tab-content">
+
+      <div class="section-title">
+        <h2>My Medicines</h2>
+        <button class="btn btn-primary" onclick="openModal()">
+          <i data-lucide="plus"></i> Add Medicine
+        </button>
+      </div>
+
+      <div id="medicines-list" class="medicines-table-wrap">
+        <!-- Populated by JS -->
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ── ADD / EDIT MODAL ─────────────────────────────────────────────── -->
+  <div id="med-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Add Medicine</h3>
+        <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="med-id" />
+
+        <div class="form-group">
+          <label for="med-name">Medicine Name <span class="req">*</span></label>
+          <input id="med-name" type="text" placeholder="e.g. Paracetamol" maxlength="100" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="med-dosage">Dosage <span class="req">*</span></label>
+            <input id="med-dosage" type="text" placeholder="e.g. 500mg" maxlength="50" />
+          </div>
+          <div class="form-group">
+            <label for="med-time">Time of Day <span class="req">*</span></label>
+            <input id="med-time" type="time" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="med-notes">Notes <span class="opt">(optional)</span></label>
+          <textarea id="med-notes" rows="3" placeholder="e.g. Take after meals, with water…"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveMedicine()">
+          <i data-lucide="save"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DELETE CONFIRM MODAL ─────────────────────────────────────────── -->
+  <div id="del-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card modal-card--sm">
+      <div class="modal-header">
+        <h3>Delete Medicine</h3>
+        <button class="modal-close" onclick="closeDelModal()" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong id="del-med-name"></strong>?<br/>
+        This will also remove all its history logs.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeDelModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">
+          <i data-lucide="trash-2"></i> Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOAST NOTIFICATION ───────────────────────────────────────────── -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
